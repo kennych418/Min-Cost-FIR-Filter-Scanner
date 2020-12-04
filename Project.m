@@ -10,13 +10,16 @@ SNR = 72; %Minumum output SNR = 72dB
 %% Convert units
 wp = 2*Fp/F_sample; %normalized to pi
 ws = 2*Fs/F_sample; %normalized to pi
+delta_s = 1/A;
 delta_p_decimal = -10^(-0.05*delta_p) + 1; %convert to decimal
 delta_s_decimal = 1/(10^((1/20)*A));  
 %k = delta_p/delta_s;
 
 %% Create and analyze ideal filter
-FIR_ideal = designfilt('lowpassfir','PassbandFrequency',wp,'StopbandFrequency',ws,'PassbandRipple',delta_p,'StopbandAttenuation',60,'DesignMethod','equiripple');
-specs_ideal = info(FIR_ideal);
+[PM_estimate,f,a,w] = firpmord([Fp Fs],[1 0],[delta_p_decimal delta_s_decimal],F_sample);
+FIR_ideal = firpm(PM_estimate+9,f,a,w);  %Perform Parks-McClellan filter design
+%FIR_ideal = designfilt('lowpassfir','PassbandFrequency',wp,'StopbandFrequency',ws,'PassbandRipple',delta_p,'StopbandAttenuation',60,'DesignMethod','equiripple');
+%specs_ideal = info(FIR_ideal);
 [H_ideal, w_ideal] = freqz(FIR_ideal); %Plot ideal filter frequency response
 [p_max_ripple_ideal,s_max_ripple_ideal] = find_max_ripple(H_ideal,w_ideal,wp*pi,ws*pi); %Verify ripple
 zplane(FIR_ideal); %Plot poles and zeros
@@ -25,15 +28,14 @@ zplane(FIR_ideal); %Plot poles and zeros
 margin_p = delta_p_decimal - p_max_ripple_ideal;
 margin_s = delta_s_decimal - s_max_ripple_ideal;
 if margin_s < margin_p
-    n = log(3*sqrt(2)*sqrt(length(FIR_ideal.Coefficients))/margin_s)/log(2);
+    n = log(3*sqrt(2)*sqrt(length(FIR_ideal))/margin_s)/log(2);
 else
-    n = log(3*sqrt(2)*sqrt(length(FIR_ideal.Coefficients))/margin_p)/log(2);
+    n = log(3*sqrt(2)*sqrt(length(FIR_ideal))/margin_p)/log(2);
 end
 n = ceil(n);
 
 %% Quantize coefficients
-FIR_quant_coef = FIR_ideal.Coefficients;
-FIR_quant_coef = round(FIR_quant_coef,n);
+FIR_quant_coef = round(FIR_ideal,n);
 
 [H_quant_coef,w_quant_coef] = freqz(FIR_quant_coef);
 [p_max_ripple_quant_coef,s_max_ripple_quant_coef] = find_max_ripple(H_quant_coef,w_quant_coef,wp*pi,ws*pi); %Verify ripple
