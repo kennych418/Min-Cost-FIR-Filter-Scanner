@@ -55,9 +55,8 @@ input = 0.5*cos(2*pi*F_input/F_sample*(1:sig_size));
 input = [input,zeros(1,length(FIR_quant_coef)-1)];  %Pad the input with 0's based on FIR_quant_coef size
 y = zeros(1,sig_size);
 for i=1:sig_size
-    y(i) = generate(input((sig_size-i+1):(length(FIR_quant_coef)+sig_size-i)),FIR_quant_coef,n);
+    y(i) = generate(input(length()-i:length(FIR_quant_coef)),FIR_quant_coef,n);
 end
-r = snr(y);
 
 %% Calculate Hardware Cost
 cost = 2*(n)^2 + 18*n;
