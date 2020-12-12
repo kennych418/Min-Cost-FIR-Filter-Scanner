@@ -209,6 +209,9 @@ zplane(FIR_quant_coef);
 grid
 
 
+
+
+
 %% Defining helper functions
 function y = generate(x,h,n) %Calculates summation(x[n]h[n]) and quantizes to match filter architecture
     i = 1;
